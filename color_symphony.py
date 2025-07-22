@@ -9,10 +9,10 @@ import RPi.GPIO as GPIO
 import time
 import random
 
-# GPIO Pin Definitions
-RED_PIN = 17      # RGB LED Red
-GREEN_PIN = 27    # RGB LED Green  
-BLUE_PIN = 22     # RGB LED Blue
+# GPIO Pin Definitions (matching your module's R, G, B pins)
+RED_PIN = 17      # Connected to R pin
+GREEN_PIN = 27    # Connected to G pin  
+BLUE_PIN = 22     # Connected to B pin
 BUZZER_PIN = 18   # Buzzer
 BUTTON_PIN = 23   # Push Button
 
@@ -74,6 +74,11 @@ class ColorSymphony:
         GPIO.setmode(GPIO.BCM)
         GPIO.setwarnings(False)
         
+        # Setup LED pins as outputs first
+        GPIO.setup(RED_PIN, GPIO.OUT)
+        GPIO.setup(GREEN_PIN, GPIO.OUT)
+        GPIO.setup(BLUE_PIN, GPIO.OUT)
+        
         # Setup LED pins as PWM outputs for color mixing
         self.red_pwm = GPIO.PWM(RED_PIN, 100)
         self.green_pwm = GPIO.PWM(GREEN_PIN, 100)
@@ -87,6 +92,7 @@ class ColorSymphony:
         # Setup buzzer as PWM for different tones
         GPIO.setup(BUZZER_PIN, GPIO.OUT)
         self.buzzer_pwm = GPIO.PWM(BUZZER_PIN, 1000)
+        self.buzzer_pwm.start(0)  # Start with 0% duty cycle
         
         # Setup button with pull-up resistor
         GPIO.setup(BUTTON_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
@@ -105,10 +111,10 @@ class ColorSymphony:
         self.blue_pwm.ChangeDutyCycle(b * 100)
         
     def play_tone(self, frequency, duration):
-        """Play a tone on the buzzer"""
+        """Play a tone on the passive buzzer"""
         if frequency > 0:
             self.buzzer_pwm.ChangeFrequency(frequency)
-            self.buzzer_pwm.start(50)  # 50% duty cycle
+            self.buzzer_pwm.start(10)  # Lower duty cycle for passive buzzer
             time.sleep(duration)
             self.buzzer_pwm.stop()
         else:
