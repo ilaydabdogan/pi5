@@ -6,10 +6,9 @@ A beginner-friendly interactive light and sound show using RGB LED, buzzer, and 
 
 ### Components Needed:
 - 1x RGB LED (common cathode)
-- 1x Active buzzer
-- 1x Push button
-- 4x 220Ω resistors (for RGB LED and buzzer)
-- 1x 10kΩ resistor (optional, for button pull-up)
+- 1x Active buzzer module (3-pin: VCC, I/O, GND)
+- 1x Push button module (3-pin: S, Middle, -)
+- 3x 220Ω resistors (for RGB LED only)
 - Jumper wires
 - Breadboard
 
@@ -21,14 +20,15 @@ RGB LED:
 - Blue pin → 220Ω resistor → GPIO 22
 - Common cathode → GND
 
-Buzzer:
-- Positive → 220Ω resistor → GPIO 18
-- Negative → GND
+Buzzer Module (3-pin):
+- VCC → 3.3V or 5V
+- I/O → GPIO 18
+- GND → GND
 
-Button:
-- One side → GPIO 23
-- Other side → GND
-(Internal pull-up resistor is used)
+Button Module (3-pin):
+- S (Signal) → GPIO 23
+- Middle → 3.3V or 5V
+- - (Minus) → GND
 ```
 
 ## 🚀 Getting Started
