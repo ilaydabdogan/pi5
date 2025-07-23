@@ -6,6 +6,7 @@ Interactive RGB LED + Buzzer + OLED show!
 
 import RPi.GPIO as GPIO
 import time
+import random
 from luma.core.interface.serial import i2c
 from luma.oled.device import ssd1306
 from luma.core.render import canvas
@@ -164,15 +165,62 @@ class ColorSymphonyOLED:
             draw.text((90, 50), pattern_num, font=self.font, fill="white")
         
     def display_idle(self):
-        """Display idle screen"""
+        """Display idle screen with animation"""
+        # Animated dots
+        dots = "." * ((int(time.time() * 2) % 3) + 1)
+        
         with canvas(oled) as draw:
             # Title
             draw.text((15, 10), "Color Symphony", font=self.font_large, fill="white")
             
             # Instructions
             draw.text((20, 35), "Press button", font=self.font, fill="white")
-            draw.text((25, 48), "to start!", font=self.font, fill="white")
+            draw.text((25, 48), f"to start{dots}", font=self.font, fill="white")
+            
+            # Draw music notes around the screen
+            note_positions = [(10, 55), (110, 55), (5, 25), (115, 25)]
+            for i, pos in enumerate(note_positions):
+                if int(time.time() * 2) % 4 == i:
+                    draw.text(pos, "♪", font=self.font, fill="white")
         
+    def display_transition(self, from_pattern, to_pattern):
+        """Display transition animation between patterns"""
+        # Wipe transition
+        for x in range(0, 128, 8):
+            with canvas(oled) as draw:
+                # Show outgoing pattern name on left
+                if x < 64:
+                    draw.text((5, 25), from_pattern, font=self.font, fill="white")
+                
+                # Wipe effect
+                draw.rectangle((x, 0, x+8, 64), fill="white")
+                
+                # Show incoming pattern name on right
+                if x > 64:
+                    draw.text((70, 25), to_pattern, font=self.font, fill="white")
+            
+            time.sleep(0.02)
+        
+        # Clear and show "Next up" message
+        with canvas(oled) as draw:
+            draw.text((35, 20), "Next up:", font=self.font, fill="white")
+            draw.text((64 - len(to_pattern)*3, 35), to_pattern, font=self.font_large, fill="white")
+        
+        time.sleep(0.5)
+    
+    def display_pattern_complete(self):
+        """Display pattern complete animation"""
+        # Sparkle effect
+        for _ in range(10):
+            with canvas(oled) as draw:
+                draw.text((25, 25), "Complete!", font=self.font_large, fill="white")
+                # Random sparkles
+                for _ in range(5):
+                    x = random.randint(0, 127)
+                    y = random.randint(0, 63)
+                    draw.point((x, y), fill="white")
+            time.sleep(0.05)
+    
     def play_pattern(self, pattern):
         """Play a complete color and sound pattern"""
         durations = pattern.get('durations', [0.3] * len(pattern['notes']))
@@ -186,18 +234,45 @@ class ColorSymphonyOLED:
         # Fade out
         self.set_color(0, 0, 0)
         
+        # Show completion animation
+        self.display_pattern_complete()
+        
     def welcome_sequence(self):
         """Play a welcome animation"""
-        # Display welcome message
-        with canvas(oled) as draw:
-            draw.text((20, 20), "Welcome to", font=self.font, fill="white")
-            draw.text((10, 35), "Color Symphony!", font=self.font_large, fill="white")
+        # Loading animation
+        for i in range(20):
+            with canvas(oled) as draw:
+                draw.text((20, 10), "Welcome to", font=self.font, fill="white")
+                draw.text((10, 25), "Color Symphony!", font=self.font_large, fill="white")
+                
+                # Loading bar
+                bar_width = int((i / 19) * 100)
+                draw.rectangle((14, 50, 14 + bar_width, 55), fill="white")
+                draw.rectangle((14, 50, 114, 55), outline="white")
+                
+                # Rotating dots
+                angle = (i * 18) % 360
+                if angle < 90:
+                    draw.text((60, 58), "●", font=self.font, fill="white")
+                elif angle < 180:
+                    draw.text((62, 58), "●", font=self.font, fill="white")
+                elif angle < 270:
+                    draw.text((64, 58), "●", font=self.font, fill="white")
+                else:
+                    draw.text((66, 58), "●", font=self.font, fill="white")
+            
+            time.sleep(0.05)
         
-        # Quick RGB test
+        # Quick RGB test with notes
         colors = [(1, 0, 0), (0, 1, 0), (0, 0, 1)]
         notes = ['C', 'E', 'G']
+        labels = ['Red', 'Green', 'Blue']
         
-        for color, note in zip(colors, notes):
+        for color, note, label in zip(colors, notes, labels):
+            with canvas(oled) as draw:
+                draw.text((45, 25), f"Testing", font=self.font, fill="white")
+                draw.text((45, 40), label, font=self.font_large, fill="white")
+            
             self.set_color(*color)
             self.play_tone(NOTES[note], 0.2)
             
@@ -215,12 +290,19 @@ class ColorSymphonyOLED:
                 if self.button_pressed:
                     self.button_pressed = False
                     
+                    # Get current and next pattern
+                    current_pattern = COLOR_PATTERNS[self.pattern_index]
+                    next_index = (self.pattern_index + 1) % len(COLOR_PATTERNS)
+                    next_pattern = COLOR_PATTERNS[next_index]
+                    
                     # Play current pattern
-                    pattern = COLOR_PATTERNS[self.pattern_index]
-                    self.play_pattern(pattern)
+                    self.play_pattern(current_pattern)
+                    
+                    # Show transition animation
+                    self.display_transition(current_pattern['name'], next_pattern['name'])
                     
                     # Move to next pattern
-                    self.pattern_index = (self.pattern_index + 1) % len(COLOR_PATTERNS)
+                    self.pattern_index = next_index
                     
                     # Show idle screen
                     time.sleep(0.5)
