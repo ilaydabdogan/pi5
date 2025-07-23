@@ -29,6 +29,12 @@ Button Module (3-pin):
 - S (Signal) → GPIO 23
 - Middle → 3.3V or 5V
 - - (Minus) → GND
+
+OLED Display (I2C):
+- VCC → 3.3V
+- GND → GND
+- SCL → GPIO 3 (SCL)
+- SDA → GPIO 2 (SDA)
 ```
 
 ## 🚀 Getting Started
@@ -73,6 +79,8 @@ This project teaches:
 
 - `rgb_led_test.py` - Simple RGB LED test
 - `color_symphony.py` - Interactive light and sound show
+- `color_symphony_oled.py` - Enhanced version with OLED display
+- `setup_oled.sh` - Setup script for OLED dependencies
 
 ## 🔧 Troubleshooting
 
