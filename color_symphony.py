@@ -32,33 +32,45 @@ NOTES = {
 COLOR_PATTERNS = [
     {
         'name': '🌅 Sunrise Melody',
-        'colors': [(1, 0, 0), (1, 1, 0), (1, 0.5, 0)],  # Red -> Yellow -> Orange
-        'notes': ['C', 'E', 'G'],
+        'colors': [(1, 0, 0), (1, 0.3, 0), (1, 0.5, 0), (1, 0.7, 0), (1, 1, 0), (1, 1, 0.5), (1, 0.5, 0)],
+        'notes': ['C', 'D', 'E', 'F', 'G', 'A', 'G'],
+        'durations': [0.4, 0.3, 0.3, 0.3, 0.5, 0.4, 0.6],
         'message': 'Dawn breaks over digital horizons...'
     },
     {
         'name': '🌊 Ocean Wave',
-        'colors': [(0, 0, 1), (0, 1, 1), (0, 1, 0)],  # Blue -> Cyan -> Green
-        'notes': ['E', 'G', 'B'],
+        'colors': [(0, 0, 1), (0, 0.3, 1), (0, 0.6, 1), (0, 1, 1), (0, 1, 0.6), (0, 1, 0.3), (0, 1, 0)],
+        'notes': ['E', 'F', 'G', 'A', 'B', 'A', 'G'],
+        'durations': [0.5, 0.3, 0.3, 0.4, 0.5, 0.3, 0.6],
         'message': 'Electric tides flow through copper shores...'
     },
     {
         'name': '🌸 Cherry Blossom',
-        'colors': [(1, 0, 1), (1, 0, 0.5), (1, 0.5, 0.5)],  # Magenta -> Pink variations
-        'notes': ['A', 'C_HIGH', 'E'],
+        'colors': [(1, 0, 1), (1, 0, 0.7), (1, 0.2, 0.5), (1, 0.4, 0.4), (1, 0.5, 0.5), (1, 0.3, 0.6)],
+        'notes': ['A', 'B', 'C_HIGH', 'E', 'C_HIGH', 'A'],
+        'durations': [0.4, 0.3, 0.5, 0.4, 0.3, 0.7],
         'message': 'Silicon petals bloom in spring circuits...'
     },
     {
         'name': '⚡ Lightning Storm',
-        'colors': [(1, 1, 1), (0, 0, 1), (1, 1, 1)],  # White -> Blue -> White
-        'notes': ['C_HIGH', 'A', 'C_HIGH'],
+        'colors': [(1, 1, 1), (0, 0, 1), (1, 1, 1), (0.5, 0.5, 1), (1, 1, 1), (0, 0, 0.5), (1, 1, 1)],
+        'notes': ['C_HIGH', 'A', 'C_HIGH', 'G', 'C_HIGH', 'E', 'C_HIGH'],
+        'durations': [0.2, 0.2, 0.2, 0.3, 0.2, 0.3, 0.5],
         'message': 'Thunder echoes through transistor clouds...'
     },
     {
         'name': '🎆 Fireworks',
-        'colors': [(1, 0, 0), (0, 1, 0), (0, 0, 1)],  # Classic RGB cycle
-        'notes': ['C', 'F', 'A'],
+        'colors': [(1, 0, 0), (1, 0.5, 0), (0, 1, 0), (0, 0.5, 1), (0, 0, 1), (1, 0, 1), (1, 0, 0)],
+        'notes': ['C', 'E', 'G', 'C_HIGH', 'G', 'E', 'C'],
+        'durations': [0.3, 0.3, 0.3, 0.5, 0.3, 0.3, 0.6],
         'message': 'Celebrating electrons in festive formation...'
+    },
+    {
+        'name': '💕 My Love for Boogie',
+        'colors': [(1, 0.2, 0.3), (1, 0.4, 0.5), (1, 0.6, 0.6), (1, 0.8, 0.7), (1, 0.6, 0.8), (1, 0.4, 0.6), (1, 0.2, 0.4), (1, 0, 0.2)],
+        'notes': ['G', 'E', 'G', 'A', 'G', 'E', 'D', 'C'],
+        'durations': [0.6, 0.4, 0.4, 0.8, 0.4, 0.4, 0.6, 1.0],
+        'message': 'Dancing hearts in synchronized circuits of affection...'
     }
 ]
 
@@ -74,15 +86,15 @@ class ColorSymphony:
         GPIO.setmode(GPIO.BCM)
         GPIO.setwarnings(False)
         
-        # Setup LED pins as outputs first
+        # Setup LED pins as outputs
         GPIO.setup(RED_PIN, GPIO.OUT)
         GPIO.setup(GREEN_PIN, GPIO.OUT)
         GPIO.setup(BLUE_PIN, GPIO.OUT)
         
-        # Setup LED pins as PWM outputs for color mixing
-        self.red_pwm = GPIO.PWM(RED_PIN, 100)
-        self.green_pwm = GPIO.PWM(GREEN_PIN, 100)
-        self.blue_pwm = GPIO.PWM(BLUE_PIN, 100)
+        # Create PWM instances with 1000Hz frequency
+        self.red_pwm = GPIO.PWM(RED_PIN, 1000)
+        self.green_pwm = GPIO.PWM(GREEN_PIN, 1000)
+        self.blue_pwm = GPIO.PWM(BLUE_PIN, 1000)
         
         # Start PWM with 0% duty cycle (off)
         self.red_pwm.start(0)
@@ -125,10 +137,13 @@ class ColorSymphony:
         print(f"\n{pattern['name']}")
         print(f"   {pattern['message']}")
         
-        for color, note in zip(pattern['colors'], pattern['notes']):
+        # Use custom durations if available, otherwise default to 0.3
+        durations = pattern.get('durations', [0.3] * len(pattern['notes']))
+        
+        for color, note, duration in zip(pattern['colors'], pattern['notes'], durations):
             self.set_color(*color)
-            self.play_tone(NOTES[note], 0.3)
-            time.sleep(0.1)
+            self.play_tone(NOTES[note], duration)
+            time.sleep(0.05)  # Small gap between notes
             
         # Fade out
         self.set_color(0, 0, 0)
